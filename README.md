@@ -9,14 +9,14 @@ talk about shared interests, and cut wait time.
 
 | Status | Component                | Notes                               |
 |--------|------------------------- |-------------------------------------|
-| ✅     | Email verification       | Streamlit password-less “magic link” |
-| ✅     | CTA Train Tracker API    | Live departure/arrival data         |
-| ✅     | Topic-based matching     | Cosine similarity on user interests |
-| ✅     | Ride-scheduling engine   | Optimizes **time together × lateness** |
-| ✅     | Profile & trip storage   | MySQL (AWS RDS)                     |
-| ✅     | Route / match display    | Interactive Streamlit UI            |
-| ⬜️     | CNET single-sign-on      | Nice-to-have                        |
-| ⬜️     | News-feed / updates      | Nice-to-have                        |
+| Done     | Email verification       | Streamlit password-less “magic link” |
+| Done    | CTA Train Tracker API    | Live departure/arrival data         |
+| Done    | Topic-based matching     | Cosine similarity on user interests |
+| Done     | Ride-scheduling engine   | Optimizes **time together × lateness** |
+| Done     | Profile & trip storage   | MySQL (AWS RDS)                     |
+| Done     | Route / match display    | Interactive Streamlit UI            |
+|      | CNET single-sign-on      | Nice-to-have                        |
+|      | News-feed / updates      | Nice-to-have                        |
 
 ---
 
