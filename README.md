@@ -61,3 +61,14 @@ CREATE TABLE matches (
     FOREIGN KEY(trip_a) REFERENCES trips(id),
     FOREIGN KEY(trip_b) REFERENCES trips(id)
 );
+```
+
+
+## Future Work
+
+In the future, there are several features we would like to implement:
+
+* Work with The University of Chicago IT to leverage CNET Verification for log-in purposes
+* Photo Verification of our Users
+* Broaden the scope of this project to go beyong the CTA Red Line
+* Increase the number of "matching topics" to include real-time news and conversation topics like Newspaper Headlines and Sporting Events
