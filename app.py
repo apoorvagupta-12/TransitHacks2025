@@ -3,151 +3,98 @@ from datetime import datetime, timedelta, time
 
 from db import init_db, get_db_connection
 from verification import verify_uchicago, generate_token, verify_email
-from cta_api import get_cta_schedule, compute_fastest
+from cta_api import compute_fastest, red_line_stations
 from matching import find_matches
 
-# Available topics for onboarding
-TOPICS = [
-    'Food', 'Sports', 'Music', 'Tech', 'Art', 'Movies', 'Books', 'Travel', 'Fitness',
-    'Gaming', 'Photography', 'Science', 'Politics', 'History', 'Comedy'
-]
+TOPICS=['Food','Sports','Music','Tech','Art','Movies','Books','Travel','Fitness','Gaming','Photography','Science','Politics','History','Comedy']
+STATIONS=list(red_line_stations.keys())
 
-# Red Line stations
-STATIONS = [
-    'Howard', 'Jarvis', 'Morse', 'Loyola', 'Granville', 'Thorndale', 'Bryn Mawr', 'Berwyn',
-    'Argyle', 'Lawrence', 'Wilson', 'Sheridan', 'Addison', 'Belmont', 'Fullerton', 'North/Clybourn',
-    'Chicago', 'Grand', 'Lake', 'Monroe', 'Jackson', 'Harrison', 'Roosevelt', 'Cermak-Chinatown',
-    'Sox-35th', '47th', 'Garfield', '63rd', '69th', '79th', '87th', '95th/Dan Ryan'
-]
+db_config=st.secrets['mysql']
+cta_key=st.secrets['cta']['api_key']
+email_sender=st.secrets['email']['sender_address']
+email_pass=st.secrets['email']['sender_password']
 
-# Load secrets
-db_config = st.secrets['mysql']
-cta_key = st.secrets['cta']['api_key']
-email_sender = st.secrets['email']['sender_address']
-email_pass = st.secrets['email']['sender_password']
-
-# Initialize DB
 init_db(db_config)
 
+# Logout only when logged in
+if st.session_state.get('logged_in'):
+    if st.sidebar.button('Logout'):
+        st.session_state.clear()
+        # no st.experimental_rerun(); next interaction shows login
+        st.stop()
 
-# --- Login ---
-def login_flow():
-    st.title("Maroon Line RideShare")
-    if not st.session_state.get("logged_in"):
-        email = st.text_input("UChicago Email:", key="login_email")
-        if st.button("Send Code"):
-            if not verify_uchicago(email):
-                st.error("Use your @uchicago.edu email.")
+# Login
+if not st.session_state.get('logged_in'):
+    st.title('Maroon Line RideShare')
+    email=st.text_input('UChicago Email:',key='login_email')
+    if st.button('Send Code'):
+        if not verify_uchicago(email):
+            st.error('Use your @uchicago.edu email.')
+        else:
+            token=generate_token()
+            st.session_state['verification_code']=token
+            verify_email(email,token,email_sender,email_pass)
+            st.session_state['email']=email
+            st.session_state['code_sent']=True
+            st.success('Code sent!')
+    if st.session_state.get('code_sent'):
+        code=st.text_input('Enter Code:',key='login_code')
+        if st.button('Verify'):
+            if code==st.session_state.get('verification_code'):
+                st.session_state['logged_in']=True
+                st.success('Verified! Reload to continue.')
             else:
-                token = generate_token()
-                st.session_state['verification_code'] = token
-                verify_email(email, token, email_sender, email_pass)
-                st.session_state['email'] = email
-                st.session_state['code_sent'] = True
-                st.success("Code sent! Check your inbox.")
-        if st.session_state.get('code_sent'):
-            code = st.text_input("Enter Code:", key="login_code")
-            if st.button("Verify"):
-                if code == st.session_state.get('verification_code'):
-                    st.session_state['logged_in'] = True
-                    st.success("Verified!")
-                else:
-                    st.error("Incorrect code.")
-        st.stop()
+                st.error('Incorrect code.')
+    st.stop()
 
-
-# --- Onboarding (interests only) ---
-def profile_flow(conn):
-    email = st.session_state['email']
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM profiles WHERE email=%s", (email,))
-    profile = cursor.fetchone()
-    if profile:
-        return profile
-
-    st.header("Select Your Interests")
-    cols = st.columns(2)
-    selected = []
-    for i, topic in enumerate(TOPICS):
-        with cols[i % 2]:
-            if st.checkbox(topic, key=f"topic_{topic}"):
-                selected.append(topic)
-    if st.button("Save Interests"):
-        interests_str = ', '.join(selected)
-        cursor.execute(
-            "INSERT INTO profiles (email, origin, destination, interests) VALUES (%s,%s,%s,%s)",
-            (email, '', '', interests_str)
-        )
+# Onboarding interests
+conn=get_db_connection(db_config)
+cursor=conn.cursor(dictionary=True)
+cursor.execute('SELECT * FROM profiles WHERE email=%s',(st.session_state.email,))
+profile=cursor.fetchone()
+if not profile:
+    st.header('Select Your Interests')
+    cols=st.columns(2)
+    sel=[]
+    for i,t in enumerate(TOPICS):
+        with cols[i%2]:
+            if st.checkbox(t,key=f'topic_{t}'):
+                sel.append(t)
+    if st.button('Save Interests'):
+        cursor.execute('INSERT INTO profiles (email,origin,destination,interests) VALUES (%s,%s,%s,%s)',
+                       (st.session_state.email,'','',','.join(sel)))
         conn.commit()
-        st.success("Interests saved! Reload to continue.")
+        st.success('Interests saved! Reload.')
         st.stop()
+    st.stop()
 
-
-# --- Request & Match UI ---
-def request_flow(conn, profile):
-    st.sidebar.write(f"Welcome, {profile['email']}")
-    st.header("Plan Your Ride")
-    mode = st.radio("Plan to", ["Depart by", "Arrive by"], horizontal=True)
-    # default origin/dest
-    try:
-        origin_idx = STATIONS.index(profile.get('origin', ''))
-    except ValueError:
-        origin_idx = 0
-    try:
-        dest_idx = STATIONS.index(profile.get('destination', ''))
-    except ValueError:
-        dest_idx = 1
-    station_origin = st.selectbox("Origin", STATIONS, index=origin_idx)
-    station_dest = st.selectbox("Destination", STATIONS, index=dest_idx)
-    ride_time = st.time_input(f"{mode} at", value=time(hour=8, minute=0), key="ride_time")
-
-    if st.button("Find Matches"):
-        today = datetime.now().date()
-        dt = datetime.combine(today, ride_time)
-        if mode == "Depart by":
-            earliest = dt
-            latest = dt + timedelta(minutes=15)
-        else:
-            latest = dt
-            earliest = dt - timedelta(minutes=15)
-
-        schedules = get_cta_schedule(cta_key, station_origin, station_dest)
-        fastest = compute_fastest(schedules)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO trips (profile_id, earliest, latest, fastest_seconds) VALUES (%s,%s,%s,%s)",
-            (profile['id'], earliest, latest, fastest)
-        )
-        conn.commit()
-        trip_id = cursor.lastrowid
-        with st.spinner('Matching riders...'):
-            matches = find_matches(
-                conn, trip_id, station_origin, station_dest,
-                earliest, latest, fastest, profile['interests']
-            )
-        if not matches:
-            st.info("No rides found.")
-        else:
-            best = matches[0]
-            st.success("You're matched!")
-            cols = st.columns([1,3])
-            cols[0].image("https://via.placeholder.com/80", width=80)
-            cols[1].markdown(f"**Name:** {best['email']}  \n" +
-                             f"**Score:** {best['score']:.2f}")
-            common = set(profile['interests'].split(', ')) & set(best['interests'].split(', '))
-            cols[1].markdown(f"**Shared Interests:** {', '.join(list(common)[:3])}")
-        cursor.close()
-
-
-# --- Main ---
-def main():
-    login_flow()
-    conn = get_db_connection(db_config)
-    profile = profile_flow(conn)
-    if profile:
-        request_flow(conn, profile)
-    conn.close()
-
-
-if __name__ == "__main__":
-    main()
+# Ride request
+st.sidebar.write(f"Logged in as: {st.session_state.email}")
+st.header('Plan Your Ride')
+mode=st.radio('Plan to',['Depart by','Arrive by'],horizontal=True)
+origin=st.selectbox('Origin',STATIONS)
+dest=st.selectbox('Destination',STATIONS)
+time_sel=st.time_input(f'{mode} at',value=time(8,0))
+if st.button('Find Matches'):
+    today=datetime.now().date()
+    dt=datetime.combine(today,time_sel)
+    if mode=='Depart by': earliest, latest=dt, dt+timedelta(minutes=15)
+    else: latest, earliest=dt, dt-timedelta(minutes=15)
+    fastest,dep,arr=compute_fastest(origin,dest,cta_key)
+    cursor.execute('INSERT INTO trips (profile_id,earliest,latest,fastest_seconds) VALUES (%s,%s,%s,%s)',
+                   (profile['id'],earliest,latest,fastest or 0))
+    conn.commit()
+    trip_id=cursor.lastrowid
+    with st.spinner('Matching riders...'):
+        matches=find_matches(conn,trip_id,origin,dest,earliest,latest,fastest or 0,profile['interests'])
+    if not matches: st.info('No rides found.')
+    else:
+        m=matches[0]
+        st.success('Matched!')
+        c=st.columns([1,3])
+        c[0].image('https://via.placeholder.com/80',width=80)
+        c[1].markdown(f"**{m['email']}**Score: {m['score']:.2f}")
+        common=set(profile['interests'].split(','))&set(m['interests'].split(','))
+        c[1].markdown(f"Shared: {', '.join(list(common)[:3])}")
+cursor.close()
+conn.close()
