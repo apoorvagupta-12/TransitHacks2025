@@ -24,10 +24,8 @@ init_db(db_config)
 if st.session_state.get('logged_in'):
     if st.sidebar.button('Logout'):
         st.session_state.clear()
-        # no st.experimental_rerun(); next interaction shows login
         st.stop()
 
-# Login
 # Login
 if not st.session_state.get("logged_in"):
     st.title("Maroon Line RideShare")
@@ -119,7 +117,7 @@ if st.button('Find Matches'):
     with st.spinner('Matching riders...'):
         matches = find_matches(
             conn, trip_id,
-            origin, dest,  # <-- use these
+            origin, dest,
             earliest, latest,
             fastest, profile['interests'],
             verbose=VERBOSE
