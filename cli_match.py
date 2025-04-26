@@ -3,9 +3,9 @@
 CLI tool for testing rider matching logic with verbose output.
 Usage:
   python cli_match.py --email alice@uchicago.edu \
-       --origin Howard --destination Bryn\ Mawr \
+       --origin Howard --destination "Bryn Mawr" \
        --interests Food,Music,Tech \
-       [--earliest 2025-04-26T08:00] [--latest 2025-04-26T08:15]
+       [--earliest 2025-04-26T08:00] [--latest 2025-04-26T08:30]
 """
 import os
 import argparse
@@ -27,13 +27,19 @@ def get_db_connection():
         database=os.getenv('DB_NAME')
     )
 
-# Fetch existing profiles/trips or insert if new
-
+# Fetch existing profiles or create new one
 def ensure_profile(cursor, email, origin, destination, interests):
-    cursor.execute("SELECT id, origin, destination, interests FROM profiles WHERE email=%s", (email,))
+    cursor.execute(
+        "SELECT id, origin, destination, interests FROM profiles WHERE email=%s",
+        (email,)
+    )
     row = cursor.fetchone()
     if row:
-        pid, orig, dest, saved = row
+        # row is a dict when dictionary=True in cursor
+        pid = row['id'] if isinstance(row, dict) else row[0]
+        orig = row['origin'] if isinstance(row, dict) else row[1]
+        dest = row['destination'] if isinstance(row, dict) else row[2]
+        saved = row['interests'] if isinstance(row, dict) else row[3]
         print(f"Using existing profile (ID {pid}): origin={orig}, dest={dest}, interests={saved}")
     else:
         cursor.execute(
@@ -72,8 +78,7 @@ def fetch_candidates(cursor, trip_id, origin, destination, earliest, latest):
     return cursor.fetchall()
 
 # Compute similarity metrics and score
-
-def compute_metrics(self, candidate, origin_earliest, origin_latest, origin_fastest, origin_interests):
+def compute_metrics(candidate, origin_earliest, origin_latest, origin_fastest, origin_interests):
     b_earliest = candidate['earliest']
     b_latest = candidate['latest']
     overlap = min(origin_latest, b_latest) - max(origin_earliest, b_earliest)
@@ -108,14 +113,8 @@ def main():
 
     # Parse times
     now = datetime.now()
-    if args.earliest:
-        origin_earliest = datetime.fromisoformat(args.earliest)
-    else:
-        origin_earliest = now
-    if args.latest:
-        origin_latest = datetime.fromisoformat(args.latest)
-    else:
-        origin_latest = origin_earliest + timedelta(minutes=30)
+    origin_earliest = datetime.fromisoformat(args.earliest) if args.earliest else now
+    origin_latest = datetime.fromisoformat(args.latest) if args.latest else origin_earliest + timedelta(minutes=30)
 
     # Compute fastest travel
     fastest_s, dep_time, arr_time = compute_fastest(
