@@ -22,8 +22,8 @@ talk about shared interests, and cut wait time.
 
 ## Tech Stack
 
-* **Frontend / UI**&nbsp;&nbsp;&nbsp;&nbsp;: Streamlit  
-* **Backend logic**&nbsp;: Python 3.10  
+* **Frontend / UI**: Streamlit  
+* **Backend logic**: Python 3.10  
 * **Database**       : MySQL 8 on Amazon RDS  
 * **APIs**           : CTA Train Tracker, SMTP (mail), optional SendGrid  
 * **Infra-as-Code**  : Terraform (optional)  
