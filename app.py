@@ -8,16 +8,16 @@ from matching import find_matches
 
 # Available topics for onboarding
 TOPICS = [
-    'Food','Sports','Music','Tech','Art','Movies','Books','Travel','Fitness',
-    'Gaming','Photography','Science','Politics','History','Comedy'
+    'Food', 'Sports', 'Music', 'Tech', 'Art', 'Movies', 'Books', 'Travel', 'Fitness',
+    'Gaming', 'Photography', 'Science', 'Politics', 'History', 'Comedy'
 ]
 
 # Red Line stations
 STATIONS = [
-    'Howard','Jarvis','Morse','Loyola','Granville','Thorndale','Bryn Mawr','Berwyn',
-    'Argyle','Lawrence','Wilson','Sheridan','Addison','Belmont','Fullerton','North/Clybourn',
-    'Chicago','Grand','Lake','Monroe','Jackson','Harrison','Roosevelt','Cermak-Chinatown',
-    'Sox-35th','47th','Garfield','63rd','69th','79th','87th','95th/Dan Ryan'
+    'Howard', 'Jarvis', 'Morse', 'Loyola', 'Granville', 'Thorndale', 'Bryn Mawr', 'Berwyn',
+    'Argyle', 'Lawrence', 'Wilson', 'Sheridan', 'Addison', 'Belmont', 'Fullerton', 'North/Clybourn',
+    'Chicago', 'Grand', 'Lake', 'Monroe', 'Jackson', 'Harrison', 'Roosevelt', 'Cermak-Chinatown',
+    'Sox-35th', '47th', 'Garfield', '63rd', '69th', '79th', '87th', '95th/Dan Ryan'
 ]
 
 # Load secrets
@@ -28,6 +28,7 @@ email_pass = st.secrets['email']['sender_password']
 
 # Initialize DB
 init_db(db_config)
+
 
 # --- Login ---
 def login_flow():
@@ -54,7 +55,8 @@ def login_flow():
                     st.error("Incorrect code.")
         st.stop()
 
-# --- Onboarding/profile ---
+
+# --- Onboarding (interests only) ---
 def profile_flow(conn):
     email = st.session_state['email']
     cursor = conn.cursor(dictionary=True)
@@ -63,27 +65,40 @@ def profile_flow(conn):
     if profile:
         return profile
 
-    st.header("Tell us what you like")
-    interests = st.multiselect("Select your interests:", TOPICS, key="onboard_interests")
-    st.header("Set your route")
-    origin = st.selectbox("Origin Station", STATIONS, key="onboard_origin")
-    destination = st.selectbox("Destination Station", STATIONS, key="onboard_destination")
-    if st.button("Save Profile"):
+    st.header("Select Your Interests")
+    cols = st.columns(2)
+    selected = []
+    for i, topic in enumerate(TOPICS):
+        with cols[i % 2]:
+            if st.checkbox(topic, key=f"topic_{topic}"):
+                selected.append(topic)
+    if st.button("Save Interests"):
+        interests_str = ', '.join(selected)
         cursor.execute(
             "INSERT INTO profiles (email, origin, destination, interests) VALUES (%s,%s,%s,%s)",
-            (email, origin, destination, ','.join(interests))
+            (email, '', '', interests_str)
         )
         conn.commit()
-        st.success("Profile created! Reload to continue.")
+        st.success("Interests saved! Reload to continue.")
         st.stop()
+
 
 # --- Request & Match UI ---
 def request_flow(conn, profile):
     st.sidebar.write(f"Welcome, {profile['email']}")
     st.header("Plan Your Ride")
     mode = st.radio("Plan to", ["Depart by", "Arrive by"], horizontal=True)
-    station_origin = st.selectbox("Origin", STATIONS, index=STATIONS.index(profile['origin']))
-    station_dest = st.selectbox("Destination", STATIONS, index=STATIONS.index(profile['destination']))
+    # default origin/dest
+    try:
+        origin_idx = STATIONS.index(profile.get('origin', ''))
+    except ValueError:
+        origin_idx = 0
+    try:
+        dest_idx = STATIONS.index(profile.get('destination', ''))
+    except ValueError:
+        dest_idx = 1
+    station_origin = st.selectbox("Origin", STATIONS, index=origin_idx)
+    station_dest = st.selectbox("Destination", STATIONS, index=dest_idx)
     ride_time = st.time_input(f"{mode} at", value=time(hour=8, minute=0), key="ride_time")
 
     if st.button("Find Matches"):
@@ -105,7 +120,6 @@ def request_flow(conn, profile):
         )
         conn.commit()
         trip_id = cursor.lastrowid
-
         with st.spinner('Matching riders...'):
             matches = find_matches(
                 conn, trip_id, station_origin, station_dest,
@@ -118,11 +132,12 @@ def request_flow(conn, profile):
             st.success("You're matched!")
             cols = st.columns([1,3])
             cols[0].image("https://via.placeholder.com/80", width=80)
-            cols[1].markdown(f"**Name:** {best['email']}  \n"
+            cols[1].markdown(f"**Name:** {best['email']}  \n" +
                              f"**Score:** {best['score']:.2f}")
-            common = set(profile['interests'].split(',')) & set(best['interests'].split(','))
+            common = set(profile['interests'].split(', ')) & set(best['interests'].split(', '))
             cols[1].markdown(f"**Shared Interests:** {', '.join(list(common)[:3])}")
         cursor.close()
+
 
 # --- Main ---
 def main():
@@ -132,6 +147,7 @@ def main():
     if profile:
         request_flow(conn, profile)
     conn.close()
+
 
 if __name__ == "__main__":
     main()
