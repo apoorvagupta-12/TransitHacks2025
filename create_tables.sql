@@ -21,12 +21,11 @@ CREATE TABLE .users (
 ,instagram 				VARCHAR(100) # OPTIONAL LINK
 ,facebook 				VARCHAR(100) # OPTIONAL LINK
 ,twitter 				VARCHAR(100) # OPTIONAL LINK
-,PRIMARY KEY(user_id)
-
+,PRIMARY KEY(user_id, email)
 ) ;
 
 CREATE TABLE .stations (
- station_id				INT UNSIGNED NOT NULL AUTO_INCREMENT
+ station_id				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT
 ,station_name			VARCHAR(100)
 ,PRIMARY KEY(station_id)
 ) ;
@@ -34,8 +33,8 @@ CREATE TABLE .stations (
 CREATE TABLE .requests (
  request_id			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT	
 ,user_id			INT UNSIGNED NOT NULL
-,orig_station_id	INT NOT NULL
-,dest_station_id	INT NOT NULL
+,orig_station_id	BIGINT NOT NULL
+,dest_station_id	BIGINT NOT NULL
 ,window_start		DATETIME NOT NULL
 ,window_end			DATETIME NOT NULL
 ,status				ENUM('CANCELLED', 'ACTIVE', 'COMPLETED') NOT NULL # 'CANCELLED', 'ACTIVE', 'COMPLETED'
@@ -46,7 +45,7 @@ CREATE TABLE .requests (
 ) ;
 
 CREATE TABLE .schedule (
- station_id			INT UNSIGNED NOT NULL
+ station_id			BIGINT UNSIGNED NOT NULL
 ,run_id				INT UNSIGNED NOT NULL
 ,arrival_time		DATETIME
 ,PRIMARY KEY(station_id, run_id)
@@ -60,8 +59,6 @@ CREATE TABLE .match (
 ,orig_station_id	INT UNSIGNED NOT NULL
 ,dest_station_id	INT UNSIGNED NOT NULL
 ,run_id				INT UNSIGNED NOT NULL			
-#,departure_time	DATETIME NOT NULL
-#,arrival_time		DATETIME NOT NULL
 ,PRIMARY KEY(trip_id)
 ,CONSTRAINT fk_user_a_id FOREIGN KEY (user_a_id) REFERENCES .users(user_id)
 ,CONSTRAINT fk_user_b_id FOREIGN KEY (user_b_id) REFERENCES .users(user_id)
