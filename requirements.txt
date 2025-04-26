@@ -20,7 +20,6 @@ MarkupSafe==3.0.2
 matplotlib==3.10.1
 mysql==0.0.3
 mysql-connector-python==9.3.0
-mysqlclient==2.2.7
 narwhals==1.36.0
 numpy==2.2.5
 packaging==24.2
