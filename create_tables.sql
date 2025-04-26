@@ -1,5 +1,5 @@
 # Create borough table
-CREATE TABLE .users (
+CREATE TABLE maroonlinedb.users (
  user_id				INT UNSIGNED NOT NULL AUTO_INCREMENT
 ,first_name				VARCHAR(20) NOT NULL
 ,last_name				VARCHAR(20) NOT NULL
@@ -24,13 +24,13 @@ CREATE TABLE .users (
 ,PRIMARY KEY(user_id, email)
 ) ;
 
-CREATE TABLE .stations (
+CREATE TABLE maroonlinedb.stations (
  station_id				BIGINT UNSIGNED NOT NULL AUTO_INCREMENT
 ,station_name			VARCHAR(100)
 ,PRIMARY KEY(station_id)
 ) ;
 
-CREATE TABLE .requests (
+CREATE TABLE maroonlinedb.requests (
  request_id			BIGINT UNSIGNED NOT NULL AUTO_INCREMENT	
 ,user_id			INT UNSIGNED NOT NULL
 ,orig_station_id	BIGINT NOT NULL
@@ -39,17 +39,17 @@ CREATE TABLE .requests (
 ,window_end			DATETIME NOT NULL
 ,status				ENUM('CANCELLED', 'ACTIVE', 'COMPLETED') NOT NULL # 'CANCELLED', 'ACTIVE', 'COMPLETED'
 ,PRIMARY KEY(request_id)
-,CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES .users(user_id)
-,CONSTRAINT fk_orig_station_id FOREIGN KEY (orig_station_id) REFERENCES .stations(station_id)
-,CONSTRAINT fk_dest_station_id FOREIGN KEY (dest_station_id) REFERENCES .stations(station_id)
+,CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES maroonlinedb.users(user_id)
+,CONSTRAINT fk_orig_station_id FOREIGN KEY (orig_station_id) REFERENCES maroonlinedb.stations(station_id)
+,CONSTRAINT fk_dest_station_id FOREIGN KEY (dest_station_id) REFERENCES maroonlinedb.stations(station_id)
 ) ;
 
-CREATE TABLE .schedule (
+CREATE TABLE maroonlinedb.schedule (
  station_id			BIGINT UNSIGNED NOT NULL
 ,run_id				INT UNSIGNED NOT NULL
 ,arrival_time		DATETIME
 ,PRIMARY KEY(station_id, run_id)
-,CONSTRAINT fk_station_id FOREIGN KEY (station_id) REFERENCES .stations(station_id)
+,CONSTRAINT fk_station_id FOREIGN KEY (station_id) REFERENCES maroonlinedb.stations(station_id)
 ) ;
 
 CREATE TABLE .match ( 
@@ -60,8 +60,8 @@ CREATE TABLE .match (
 ,dest_station_id	INT UNSIGNED NOT NULL
 ,run_id				INT UNSIGNED NOT NULL			
 ,PRIMARY KEY(trip_id)
-,CONSTRAINT fk_user_a_id FOREIGN KEY (user_a_id) REFERENCES .users(user_id)
-,CONSTRAINT fk_user_b_id FOREIGN KEY (user_b_id) REFERENCES .users(user_id)
-,CONSTRAINT fk_orig_station_id FOREIGN KEY (orig_station_id) REFERENCES .stations(station_id)
-,CONSTRAINT fk_dest_station_id FOREIGN KEY (dest_station_id) REFERENCES .stations(station_id)
+,CONSTRAINT fk_user_a_id FOREIGN KEY (user_a_id) REFERENCES maroonlinedb.users(user_id)
+,CONSTRAINT fk_user_b_id FOREIGN KEY (user_b_id) REFERENCES maroonlinedb.users(user_id)
+,CONSTRAINT fk_orig_station_id FOREIGN KEY (orig_station_id) REFERENCES maroonlinedb.stations(station_id)
+,CONSTRAINT fk_dest_station_id FOREIGN KEY (dest_station_id) REFERENCES maroonlinedb.stations(station_id)
 ) ;

@@ -1,40 +1,35 @@
-INSERT INTO .stations (station_id, station_name)
+INSERT INTO maroonlinedb.stations (station_id, station_name)
 VALUES
-    ("40900", "Howard"),
-    ("41190", "Jarvis"),
-    ("41300", "Morse"),
-    ("41400", "Loyola"),
-    ("41500", "Granville"),
-    ("41600", "Thorndale"),
-    ("41800", "Bryn Mawr"),
-    ("41900", "Berwyn"),
-    ("42000", "Argyle"),
-    ("42100", "Lawrence"),
-    ("42240", "Wilson"),
-    ("42300", "Sheridan"),
-    ("42500", "Addison"),
-    ("42690", "Belmont"),
-    ("42750", "Fullerton"),
-    ("42810", "North/Clybourn"),
-    ("42900", "Clark/Division"),
-    ("43000", "Chicago"),
-    ("43100", "Grand"),
-    ("40380", "Lake"),
-    ("40560", "Monroe"),
-    ("40590", "Jackson"),
-    ("41490", "Harrison"),
-    ("41500", "Roosevelt"),
-    ("41000", "Cermak-Chinatown"),
-    ("40190", "Sox-35th"),
-    ("40220", "47th"),
-    ("40510", "Garfield"),
-    ("40910", "63rd"),
-    ("40990", "69th"),
-    ("40240", "79th"),
-    ("41430", "87th"),
-    ("40450", "95th/Dan Ryan") ;
+ ("40900", "Howard"),
+ ("41190", "Jarvis"),
+ ("40100", "Morse"),
+ ("41300", "Loyola"),
+ ("41380", "Bryn Mawr"),
+ ("40340", "Berwyn"),
+ ("41200", "Argyle"),
+ ("40770", "Lawrence"),
+ ("40080", "Sheridan"),
+ ("41420", "Addison (Red Line)"),
+ ("41320", "Belmont (Red, Brown, Purple Lines)"),
+ ("41220", "Fullerton"),
+ ("40650", "North/Clybourn"),
+ ("41450", "Chicago (Red Line)"),
+ ("40330", "Grand (Red Line)"),
+ ("41090", "Monroe (Red Line)"),
+ ("40560", "Jackson (Red Line)"),
+ ("41400", "Roosevelt"),
+ ("40190", "Sox-35th"),
+ ("41230", "47th (Red Line)"),
+ ("41170", "Garfield (Red Line)"),
+ ("40910", "63rd"),
+ ("40990", "69th"),
+ ("40240", "79th"),
+ ("41430", "87th"),
+ ("40450", "95th")
+ 
+ ;
     
-INSERT INTO .users (
+INSERT INTO maroonlinedb.users (
 	first_name				
 	,last_name				
 	,date_of_birth			
