@@ -16,7 +16,11 @@ talk about shared interests, and cut wait time.
 | Done     | Profile & trip storage   | MySQL (AWS RDS)                     |
 | Done     | Route / match display    | Interactive Streamlit UI            |
 |      | CNET single-sign-on      | Nice-to-have                        |
+|      | Photo verification      | Nice-to-have                        |
+|      | Train schedule change alerts      | Nice-to-have                        |
+|      | Tools to identify yourself and confirm the identity of your match      | Nice-to-have                        |
 |      | News-feed / updates      | Nice-to-have                        |
+|      | Mobile games      | Nice-to-have                        |
 
 ---
 
